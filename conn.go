@@ -96,6 +96,8 @@ func (s *conn) Request() *http.Request {
 }
 
 func (s *conn) Close() error {
+	defer recover()
+
 	if s.t == nil {
 		return nil
 	}
@@ -145,6 +147,8 @@ func (s *conn) nextWriter(messageType MessageType, packetType packetType) (io.Wr
 }
 
 func (s *conn) serveHTTP(w http.ResponseWriter, r *http.Request) {
+	defer recover()
+
 	if s.t == nil {
 		http.Error(w, "closed", http.StatusBadRequest)
 		return
@@ -183,6 +187,8 @@ func (s *conn) serveHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *conn) onOpen() error {
+	defer recover()
+
 	resp := connectionInfo{
 		Sid:          s.id,
 		Upgrades:     s.server.transports.Upgrades(),
@@ -204,6 +210,8 @@ func (s *conn) onOpen() error {
 }
 
 func (s *conn) onPacket(decoder *packetDecoder) {
+	defer recover()
+
 	switch decoder.Type() {
 	case _PING:
 		if s.origin != nil {
@@ -240,6 +248,9 @@ func (s *conn) onPacket(decoder *packetDecoder) {
 }
 
 func (s *conn) onClose() {
+	defer recover()
+
+	close(s.readerChan)
 	close(s.pingChan)
 	s.server.onClose(s)
 	s.origin = nil
@@ -247,6 +258,8 @@ func (s *conn) onClose() {
 }
 
 func (s *conn) pingLoop() {
+	defer recover()
+
 	lastPing := time.Now()
 	for {
 		now := time.Now()
